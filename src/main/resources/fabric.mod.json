@@ -1,0 +1,39 @@
+{
+	"schemaVersion": 1,
+	"id": "sweeper-can",
+	"version": "${version}",
+	"name": "Sweeper Can",
+	"description": "一个让清理世界变得轻而易举的垃圾桶模组！",
+	"authors": [ "Tetrahedron" ],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/sweeper-can/icon.png",
+	"environment": "*",
+        "entrypoints": {
+                "main": [
+                        "te.sweeper_can.SweeperCan"
+                ],
+                "client": [
+                        "te.sweeper_can.client.SweeperCanClient"
+                ],
+                "modmenu": [
+                        "te.sweeper_can.client.SweeperCanModMenu"
+                ]
+        },
+	"mixins": [
+		"sweeper-can.mixins.json",
+		{
+			"config": "sweeper-can.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	}
+}
