@@ -132,6 +132,7 @@ public class SweeperCanClient implements ClientModInitializer {
 		general.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.interval"), SweeperConfig.INSTANCE.intervalTicks)
 				.setDefaultValue(defaults.intervalTicks).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.intervalTicks = newValue).build());
 
+
 		general.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msg60"), SweeperConfig.INSTANCE.message60s)
 				.setDefaultValue(defaults.message60s).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.message60s = newValue).build());
 

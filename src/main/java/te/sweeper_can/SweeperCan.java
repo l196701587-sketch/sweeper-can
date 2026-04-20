@@ -70,13 +70,13 @@ public class SweeperCan implements ModInitializer {
 
 			dispatcher.register(Commands.literal("sweeper")
 				.then(openNode)
-				.then(Commands.literal("manual").requires(source -> source.hasPermission(2)).executes(context -> {
-					int interval = SweeperConfig.INSTANCE.intervalTicks;
+                                .then(Commands.literal("manual").requires(source -> source.hasPermission(SweeperConfig.INSTANCE.commandOpLevel)).executes(context -> {
+                                        int interval = SweeperConfig.INSTANCE.intervalTicks;
 					tickCounter = interval - 200; // 10 seconds before clear
 					return 1;
 				}))
-				.then(Commands.literal("amount").requires(source -> source.hasPermission(2))
-					.then(Commands.argument("count", IntegerArgumentType.integer(1, 10)).executes(context -> {
+                                .then(Commands.literal("amount").requires(source -> source.hasPermission(SweeperConfig.INSTANCE.commandOpLevel))
+                                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 10)).executes(context -> {
 						int newCount = IntegerArgumentType.getInteger(context, "count");
 						SweeperConfig.INSTANCE.trashCanCount = newCount;
 						SweeperConfig.saveConfig();
@@ -85,19 +85,26 @@ public class SweeperCan implements ModInitializer {
 						return 1;
 					}))
 				)
-				.then(Commands.literal("config").requires(source -> source.hasPermission(2)).executes(context -> {
-					ServerPlayNetworking.send(context.getSource().getPlayerOrException(), OPEN_CONFIG_PACKET, PacketByteBufs.create());
-					return 1;
-				}))
+                                .then(Commands.literal("config").requires(source -> source.hasPermission(SweeperConfig.INSTANCE.commandOpLevel)).executes(context -> {
+                                        ServerPlayer player = context.getSource().getPlayerOrException();
+                                        if (ServerPlayNetworking.canSend(player, OPEN_CONFIG_PACKET)) {
+                                                ServerPlayNetworking.send(player, OPEN_CONFIG_PACKET, PacketByteBufs.create());
+                                        } else {
+                                                context.getSource().sendFailure(Component.literal("You need the Sweeper Can mod installed on the client to use the config UI."));
+                                        }
+                                        return 1;
+                                }))
 			);
 		});
 
 		// Networking: Send config on join
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			FriendlyByteBuf buf = PacketByteBufs.create();
-			buf.writeUtf(SweeperConfig.serialize());
-			ServerPlayNetworking.send(handler.getPlayer(), SYNC_CONFIG_PACKET, buf);
-		});
+                ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+                        if (ServerPlayNetworking.canSend(handler.getPlayer(), SYNC_CONFIG_PACKET)) {
+                                FriendlyByteBuf buf = PacketByteBufs.create();
+                                buf.writeUtf(SweeperConfig.serialize());
+                                ServerPlayNetworking.send(handler.getPlayer(), SYNC_CONFIG_PACKET, buf);
+                        }
+                });
 
 		// Networking: Save Config from Client
 		ServerPlayNetworking.registerGlobalReceiver(SAVE_CONFIG_PACKET, (server, player, handler, buf, responseSender) -> {
@@ -174,12 +181,14 @@ public class SweeperCan implements ModInitializer {
 		LOGGER.info("Hello Fabric world!");
 	}
 
-	public static void syncConfigToAll(net.minecraft.server.MinecraftServer server) {
-		FriendlyByteBuf buf = PacketByteBufs.create();
-		buf.writeUtf(SweeperConfig.serialize());
-		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-			ServerPlayNetworking.send(player, SYNC_CONFIG_PACKET, buf);
-		}
-	}
+        public static void syncConfigToAll(net.minecraft.server.MinecraftServer server) {
+                FriendlyByteBuf buf = PacketByteBufs.create();
+                buf.writeUtf(SweeperConfig.serialize());
+                for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                        if (ServerPlayNetworking.canSend(player, SYNC_CONFIG_PACKET)) {
+                                ServerPlayNetworking.send(player, SYNC_CONFIG_PACKET, buf);
+                        }
+                }
+        }
 }
 

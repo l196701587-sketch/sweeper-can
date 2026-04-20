@@ -13,6 +13,9 @@ public class SweeperConfig {
     public String _comment_intervalTicks = "自动清理的时间间隔 (ticks) 20 ticks = 1秒。";
     public int intervalTicks = 6000;
 
+    public String _comment_commandOpLevel = "执行管理指令所需的OP权限等级 (默认 2)";
+    public int commandOpLevel = 2;
+
     public String _comment_messages = "倒计时和清理结果的通报消息配置";
     public String message60s = "§e将在 60 秒后清理掉落物...";
     public String message30s = "§e将在 30 秒后清理掉落物...";

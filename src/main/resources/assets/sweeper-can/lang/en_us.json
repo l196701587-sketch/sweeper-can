@@ -2,6 +2,7 @@
   "text.sweeper_maid.config.title": "Sweeper Can Settings",
   "text.sweeper_maid.category.general": "General",
   "text.sweeper_maid.option.interval": "Interval Ticks",
+  "text.sweeper_maid.option.oplevel": "Command OP Level",
   "text.sweeper_maid.option.msg60": "Message 60s",
   "text.sweeper_maid.option.msg30": "Message 30s",
   "text.sweeper_maid.option.msgcd": "Message Countdown (％d = remaining seconds)",

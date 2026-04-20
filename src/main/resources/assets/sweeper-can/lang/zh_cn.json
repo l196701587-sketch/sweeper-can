@@ -2,6 +2,7 @@
   "text.sweeper_maid.config.title": "垃圾桶模组配置",
   "text.sweeper_maid.category.general": "通用设置",
   "text.sweeper_maid.option.interval": "清理间隔 (Ticks)",
+  "text.sweeper_maid.option.oplevel": "管理员指令所需权限等级",
   "text.sweeper_maid.option.msg60": "倒计时 60s 提示消息",
   "text.sweeper_maid.option.msg30": "倒计时 30s 提示消息",
   "text.sweeper_maid.option.msgcd": "倒数提醒消息（％d 为剩余秒数）",

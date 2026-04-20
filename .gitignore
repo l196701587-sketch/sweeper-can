@@ -2,7 +2,11 @@
 
 .gradle/
 build/
+bin/
+run/
+.run/
 out/
+*.log
 classes/
 
 # eclipse
