@@ -7,13 +7,18 @@
   "text.sweeper_maid.option.msg30": "倒计时 30s 提示消息",
   "text.sweeper_maid.option.msgcd": "倒数提醒消息（％d 为剩余秒数）",
   "text.sweeper_maid.option.msgclr": "清理完成提示消息（％d 为清理的掉落物数量）",
+  "text.sweeper_maid.category.messages": "提示消息文本",
   "text.sweeper_maid.category.trashcan": "垃圾桶界面",
   "text.sweeper_maid.option.title": "垃圾桶标题",
   "text.sweeper_maid.option.maxpages": "垃圾桶数量 (最大页数)",
   "text.sweeper_maid.option.suffix": "页数后缀格式（％d 为当前页数）",
-  "text.sweeper_maid.category.uibutton": "UI 收纳按钮",
+  "text.sweeper_maid.category.uibutton": "背包界面垃圾桶按钮",
   "text.sweeper_maid.option.showmode": "显示模式",
   "text.sweeper_maid.tooltip.showmode": "可填参数: all (全部显示), survival (仅生存), creative (仅创造), false (关闭)",
   "text.sweeper_maid.option.xoffset": "按钮横向偏移量 (X)",
-  "text.sweeper_maid.option.yoffset": "按钮纵向偏移量 (Y)"
+  "text.sweeper_maid.option.yoffset": "按钮纵向偏移量 (Y)",
+  "text.sweeper_maid.option.msgsched": "定时提示消息（％d 为/sweeper clean指令输入的秒数）",
+  "text.sweeper_maid.option.allow_put": "允许直接放入物品",
+  "text.sweeper_maid.option.page_xoffset": "翻页按钮横向偏移量 (X)",
+  "text.sweeper_maid.option.page_yoffset": "翻页按钮纵向偏移量 (Y)"
 }

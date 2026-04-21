@@ -7,13 +7,18 @@
   "text.sweeper_maid.option.msg30": "Message 30s",
   "text.sweeper_maid.option.msgcd": "Message Countdown (％d = remaining seconds)",
   "text.sweeper_maid.option.msgclr": "Message Cleared (％d = cleared item count)",
+  "text.sweeper_maid.category.messages": "Messages",
   "text.sweeper_maid.category.trashcan": "Trash Can",
   "text.sweeper_maid.option.title": "Title",
   "text.sweeper_maid.option.maxpages": "Count (Max Pages)",
   "text.sweeper_maid.option.suffix": "Page Suffix (％d = current page)",
-  "text.sweeper_maid.category.uibutton": "UI Button",
+  "text.sweeper_maid.category.uibutton": "Backpack UI Dustbin Button",
   "text.sweeper_maid.option.showmode": "Show Mode",
   "text.sweeper_maid.tooltip.showmode": "Options: all, survival, creative, false",
   "text.sweeper_maid.option.xoffset": "Button X Offset",
-  "text.sweeper_maid.option.yoffset": "Button Y Offset"
+  "text.sweeper_maid.option.yoffset": "Button Y Offset",
+  "text.sweeper_maid.option.msgsched": "Message Schedule (％d = input number of '/sweeper clean' command)",
+  "text.sweeper_maid.option.allow_put": "Allow putting items in directly",
+  "text.sweeper_maid.option.page_xoffset": "Page Button X Offset",
+  "text.sweeper_maid.option.page_yoffset": "Page Button Y Offset"
 }

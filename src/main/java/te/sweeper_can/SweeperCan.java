@@ -9,7 +9,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerLevel;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -44,9 +43,14 @@ public class SweeperCan implements ModInitializer {
 				.executes(context -> {
 					var player = context.getSource().getPlayerOrException();
 					var state = SweeperState.getServerState(context.getSource().getServer());
+					int maxPages = Math.min(10, Math.max(1, SweeperConfig.INSTANCE.trashCanCount));
+					String title = SweeperConfig.INSTANCE.trashCanTitle;
+					if (maxPages > 1) {
+						title += String.format(SweeperConfig.INSTANCE.pageSuffix, 1);
+					}
 					player.openMenu(new SimpleMenuProvider(
-							(syncId, inventory, p) -> ChestMenu.sixRows(syncId, inventory, state.inventories[0]),
-							Component.literal(SweeperConfig.INSTANCE.trashCanTitle + " (Page 1)")
+							(syncId, inventory, p) -> new TrashCanMenu(syncId, inventory, state.inventories[0]),
+							Component.literal(title)
 					));
 					return 1;
 				})
@@ -59,10 +63,10 @@ public class SweeperCan implements ModInitializer {
 					final int finalPage = page;
 					String title = SweeperConfig.INSTANCE.trashCanTitle;
 					if (maxPages > 1) {
-					    title += " (Page " + (finalPage + 1) + ")";
+					    title += String.format(SweeperConfig.INSTANCE.pageSuffix, finalPage + 1);
 					}
 					player.openMenu(new SimpleMenuProvider(
-							(syncId, inventory, p) -> ChestMenu.sixRows(syncId, inventory, state.inventories[finalPage]),
+							(syncId, inventory, p) -> new TrashCanMenu(syncId, inventory, state.inventories[finalPage]),
 							Component.literal(title)
 					));
 					return 1;
@@ -70,11 +74,31 @@ public class SweeperCan implements ModInitializer {
 
 			dispatcher.register(Commands.literal("sweeper")
 				.then(openNode)
-                                .then(Commands.literal("manual").requires(source -> source.hasPermission(SweeperConfig.INSTANCE.commandOpLevel)).executes(context -> {
-                                        int interval = SweeperConfig.INSTANCE.intervalTicks;
-					tickCounter = interval - 200; // 10 seconds before clear
+				.then(Commands.literal("blacklist").requires(source -> source.hasPermission(SweeperConfig.INSTANCE.commandOpLevel)).executes(context -> {
+					var player = context.getSource().getPlayerOrException();
+					var state = SweeperState.getServerState(context.getSource().getServer());
+					player.openMenu(new SimpleMenuProvider(
+							(syncId, inventory, p) -> new GhostMenu(syncId, inventory, state.blacklist),
+							Component.literal("清理黑名单")
+					));
 					return 1;
 				}))
+                                .then(Commands.literal("clean").requires(source -> source.hasPermission(SweeperConfig.INSTANCE.commandOpLevel))
+                                        .executes(context -> {
+                                                tickCounter = SweeperConfig.INSTANCE.intervalTicks; // Default: immediately clean
+                                                return 1;
+                                        })
+                                        .then(Commands.argument("seconds", IntegerArgumentType.integer(0)).executes(context -> {
+                                                int seconds = IntegerArgumentType.getInteger(context, "seconds");
+                                                tickCounter = SweeperConfig.INSTANCE.intervalTicks - (seconds * 20);
+
+                                                Component msg = Component.literal(String.format(SweeperConfig.INSTANCE.messageCleanScheduled, seconds));
+                                                for (ServerPlayer p : context.getSource().getServer().getPlayerList().getPlayers()) {
+                                                        p.displayClientMessage(msg, true);
+                                                }
+                                                return 1;
+                                        }))
+                                )
                                 .then(Commands.literal("amount").requires(source -> source.hasPermission(SweeperConfig.INSTANCE.commandOpLevel))
                                         .then(Commands.argument("count", IntegerArgumentType.integer(1, 10)).executes(context -> {
 						int newCount = IntegerArgumentType.getInteger(context, "count");
@@ -144,6 +168,18 @@ public class SweeperCan implements ModInitializer {
 					for (net.minecraft.world.entity.Entity entity : level.getAllEntities()) {
 						if (entity instanceof ItemEntity itemEntity) {
 							ItemStack stack = itemEntity.getItem();
+
+							// Check blacklist
+							boolean isBlacklisted = false;
+							for (int i = 0; i < state.blacklist.getContainerSize(); i++) {
+								ItemStack blacklistItem = state.blacklist.getItem(i);
+								if (!blacklistItem.isEmpty() && ItemStack.isSameItemSameTags(stack, blacklistItem)) {
+									isBlacklisted = true;
+									break;
+								}
+							}
+							if (isBlacklisted) continue;
+
 							clearedCount += stack.getCount();
 
 							// Try to insert into trash can pages
@@ -191,4 +227,3 @@ public class SweeperCan implements ModInitializer {
                 }
         }
 }
-

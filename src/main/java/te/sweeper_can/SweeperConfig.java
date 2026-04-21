@@ -22,6 +22,9 @@ public class SweeperConfig {
     public String messageCountdown = "§c将在 %d 秒后清理掉落物...";
     public String messageCleared = "§a清理了 %d 个掉落物。";
 
+    public String _comment_messageCleanScheduled = "使用/sweeper clean指令时显示的提示消息，%d 将被替换为设定的时间（秒）";
+    public String messageCleanScheduled = "§e将在 %d 秒后清理掉落物";
+
     public String _comment_trashCan = "--- 垃圾桶界面的标题和翻页相关配置名称 ---";
 
     public String _comment_trashCanTitle = "垃圾桶界面的标题";
@@ -42,6 +45,13 @@ public class SweeperConfig {
     public String _comment_buttonPos = "该快捷按钮在物品栏的偏移量（基础位置在屏幕水平居中，垂直靠上处）";
     public int inventoryButtonX = 0;
     public int inventoryButtonY = 0;
+
+    public String _comment_pageControlPos = "翻页按钮在垃圾桶界面的偏移量（基础位置在界面水平居中，垂直靠上处）";
+    public int pageControlButtonX = 0;
+    public int pageControlButtonY = 0;
+
+    public String _comment_allowPutItemsInTrashCan = "是否能让玩家从背包里把物品放入垃圾桶里";
+    public boolean allowPutItemsInTrashCan = true;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "sweeper_can.json");
@@ -75,4 +85,3 @@ public class SweeperConfig {
         }
     }
 }
-

@@ -62,6 +62,30 @@ public class SweeperCanClient implements ClientModInitializer {
 				).build());
 			}
 
+			if (screen instanceof me.shedaniel.clothconfig2.gui.ClothConfigScreen) {
+				Screens.getButtons(screen).add(Button.builder(Component.literal("Open Blacklist / 清理黑名单"), btn -> {
+					Minecraft.getInstance().setScreen(null); // Close config UI first
+					if (Minecraft.getInstance().player != null) {
+						Minecraft.getInstance().player.connection.sendUnsignedCommand("sweeper blacklist");
+					}
+				}).bounds(10, 10, 140, 20).build());
+				// 去除搜索框
+				try {
+					java.lang.reflect.Field field = me.shedaniel.clothconfig2.gui.ClothConfigScreen.class.getDeclaredField("searchFieldEntry");
+					field.setAccessible(true);
+					Object searchEntry = field.get(screen);
+					if (searchEntry != null) {
+						java.lang.reflect.Field editBoxField = me.shedaniel.clothconfig2.gui.widget.SearchFieldEntry.class.getDeclaredField("editBox");
+						editBoxField.setAccessible(true);
+						net.minecraft.client.gui.components.EditBox editBox = (net.minecraft.client.gui.components.EditBox) editBoxField.get(searchEntry);
+						if (editBox != null) {
+							editBox.visible = false;
+							editBox.setEditable(false);
+						}
+					}
+				} catch (Exception ignored) {}
+			}
+
 			if (screen instanceof ContainerScreen chestScreen) {
 				String titleTitle = chestScreen.getTitle().getString();
 				if (titleTitle.startsWith(SweeperConfig.INSTANCE.trashCanTitle)) {
@@ -91,12 +115,15 @@ public class SweeperCanClient implements ClientModInitializer {
 					int guiTop = (chestScreen.height - 222) / 2;
 					// The space between the container rows and player inventory in a 6-row chest starts around top + 130.
 
+					int centerX = guiLeft + 176 / 2;
+					int baseY = guiTop - 20;
+
 					Button prevButton = Button.builder(Component.literal("<"), btn -> {
 						savedMouseX = client.mouseHandler.xpos();
 						savedMouseY = client.mouseHandler.ypos();
 						expectsPageSwitch = true;
 						Minecraft.getInstance().player.connection.sendUnsignedCommand("sweeper open " + targetPrev);
-					}).bounds(guiLeft + 180, guiTop + 125, 15, 15).build();
+					}).bounds(centerX - 15 - 3 + SweeperConfig.INSTANCE.pageControlButtonX, baseY + SweeperConfig.INSTANCE.pageControlButtonY, 15, 15).build();
 					prevButton.active = currentPage > 1;
 					Screens.getButtons(screen).add(prevButton);
 
@@ -105,14 +132,14 @@ public class SweeperCanClient implements ClientModInitializer {
 						savedMouseY = client.mouseHandler.ypos();
 						expectsPageSwitch = true;
 						Minecraft.getInstance().player.connection.sendUnsignedCommand("sweeper open " + targetNext);
-					}).bounds(guiLeft + 195, guiTop + 125, 15, 15).build();
+					}).bounds(centerX + 3 + SweeperConfig.INSTANCE.pageControlButtonX, baseY + SweeperConfig.INSTANCE.pageControlButtonY, 15, 15).build();
 					nextButton.active = currentPage < maxPages;
 					Screens.getButtons(screen).add(nextButton);
 				}
 			}
 		});
 	}
-
+	// 构建配置UI界面
 	public static Screen buildConfigScreen(Screen parent) {
 		ConfigBuilder builder = ConfigBuilder.create()
 				.setParentScreen(parent)
@@ -132,29 +159,42 @@ public class SweeperCanClient implements ClientModInitializer {
 		general.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.interval"), SweeperConfig.INSTANCE.intervalTicks)
 				.setDefaultValue(defaults.intervalTicks).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.intervalTicks = newValue).build());
 
+		general.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.maxpages"), SweeperConfig.INSTANCE.trashCanCount)
+				.setDefaultValue(defaults.trashCanCount).setMin(1).setMax(10).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.trashCanCount = newValue).build());
 
-		general.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msg60"), SweeperConfig.INSTANCE.message60s)
+		general.addEntry(entryBuilder.startBooleanToggle(Component.translatable("text.sweeper_maid.option.allow_put"), SweeperConfig.INSTANCE.allowPutItemsInTrashCan)
+				.setDefaultValue(defaults.allowPutItemsInTrashCan).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.allowPutItemsInTrashCan = newValue).build());
+
+		ConfigCategory messages = builder.getOrCreateCategory(Component.translatable("text.sweeper_maid.category.messages"));
+
+		messages.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msg60"), SweeperConfig.INSTANCE.message60s)
 				.setDefaultValue(defaults.message60s).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.message60s = newValue).build());
 
-		general.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msg30"), SweeperConfig.INSTANCE.message30s)
+		messages.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msg30"), SweeperConfig.INSTANCE.message30s)
 				.setDefaultValue(defaults.message30s).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.message30s = newValue).build());
 
-		general.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msgcd"), SweeperConfig.INSTANCE.messageCountdown)
+		messages.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msgcd"), SweeperConfig.INSTANCE.messageCountdown)
 				.setDefaultValue(defaults.messageCountdown).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.messageCountdown = newValue).build());
 
-		general.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msgclr"), SweeperConfig.INSTANCE.messageCleared)
+		messages.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msgclr"), SweeperConfig.INSTANCE.messageCleared)
 				.setDefaultValue(defaults.messageCleared).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.messageCleared = newValue).build());
+
+		messages.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msgsched"), SweeperConfig.INSTANCE.messageCleanScheduled)
+				.setDefaultValue(defaults.messageCleanScheduled).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.messageCleanScheduled = newValue).build());
 
 		ConfigCategory trashCan = builder.getOrCreateCategory(Component.translatable("text.sweeper_maid.category.trashcan"));
 
 		trashCan.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.title"), SweeperConfig.INSTANCE.trashCanTitle)
 				.setDefaultValue(defaults.trashCanTitle).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.trashCanTitle = newValue).build());
 
-		trashCan.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.maxpages"), SweeperConfig.INSTANCE.trashCanCount)
-				.setDefaultValue(defaults.trashCanCount).setMin(1).setMax(10).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.trashCanCount = newValue).build());
-
 		trashCan.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.suffix"), SweeperConfig.INSTANCE.pageSuffix)
 				.setDefaultValue(defaults.pageSuffix).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.pageSuffix = newValue).build());
+
+		trashCan.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.page_xoffset"), SweeperConfig.INSTANCE.pageControlButtonX)
+				.setDefaultValue(defaults.pageControlButtonX).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.pageControlButtonX = newValue).build());
+
+		trashCan.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.page_yoffset"), SweeperConfig.INSTANCE.pageControlButtonY)
+				.setDefaultValue(defaults.pageControlButtonY).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.pageControlButtonY = newValue).build());
 
 		ConfigCategory ui = builder.getOrCreateCategory(Component.translatable("text.sweeper_maid.category.uibutton"));
 
@@ -171,5 +211,18 @@ public class SweeperCanClient implements ClientModInitializer {
 		return builder.build();
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
