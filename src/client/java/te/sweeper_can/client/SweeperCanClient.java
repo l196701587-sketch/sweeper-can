@@ -26,6 +26,7 @@ public class SweeperCanClient implements ClientModInitializer {
     private static double savedMouseX = -1;
     private static double savedMouseY = -1;
     private static boolean expectsPageSwitch = false;
+    private static boolean isConfirmingClear = false;
 
 	@Override
 	public void onInitializeClient() {
@@ -118,6 +119,19 @@ public class SweeperCanClient implements ClientModInitializer {
 					int centerX = guiLeft + 176 / 2;
 					int baseY = guiTop - 20;
 
+					isConfirmingClear = false;
+					Button clearButton = Button.builder(Component.translatable("text.sweeper_maid.button.clear"), btn -> {
+						if (!isConfirmingClear) {
+							isConfirmingClear = true;
+							btn.setMessage(Component.translatable("text.sweeper_maid.button.confirm_clear"));
+						} else {
+							ClientPlayNetworking.send(SweeperCan.EMPTY_TRASH_PACKET, PacketByteBufs.empty());
+							isConfirmingClear = false;
+							btn.setMessage(Component.translatable("text.sweeper_maid.button.cleared"));
+						}
+					}).bounds(guiLeft + 176 - 60 + SweeperConfig.INSTANCE.clearButtonX, baseY + SweeperConfig.INSTANCE.clearButtonY, 60, 15).build();
+					Screens.getButtons(screen).add(clearButton);
+
 					Button prevButton = Button.builder(Component.literal("<"), btn -> {
 						savedMouseX = client.mouseHandler.xpos();
 						savedMouseY = client.mouseHandler.ypos();
@@ -156,8 +170,11 @@ public class SweeperCanClient implements ClientModInitializer {
 		ConfigCategory general = builder.getOrCreateCategory(Component.translatable("text.sweeper_maid.category.general"));
 		ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-		general.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.interval"), SweeperConfig.INSTANCE.intervalTicks)
-				.setDefaultValue(defaults.intervalTicks).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.intervalTicks = newValue).build());
+		general.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.interval"), SweeperConfig.INSTANCE.intervalSeconds)
+				.setDefaultValue(defaults.intervalSeconds).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.intervalSeconds = newValue).build());
+
+		general.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.empty_op_level"), SweeperConfig.INSTANCE.commandEmptyOpLevel)
+				.setDefaultValue(defaults.commandEmptyOpLevel).setMin(0).setMax(4).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.commandEmptyOpLevel = newValue).build());
 
 		general.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.maxpages"), SweeperConfig.INSTANCE.trashCanCount)
 				.setDefaultValue(defaults.trashCanCount).setMin(1).setMax(10).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.trashCanCount = newValue).build());
@@ -166,6 +183,21 @@ public class SweeperCanClient implements ClientModInitializer {
 				.setDefaultValue(defaults.allowPutItemsInTrashCan).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.allowPutItemsInTrashCan = newValue).build());
 
 		ConfigCategory messages = builder.getOrCreateCategory(Component.translatable("text.sweeper_maid.category.messages"));
+
+		messages.addEntry(entryBuilder.startBooleanToggle(Component.translatable("text.sweeper_maid.option.enable_countdown_broadcast"), SweeperConfig.INSTANCE.enableCountdownBroadcast)
+				.setDefaultValue(defaults.enableCountdownBroadcast).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.enableCountdownBroadcast = newValue).build());
+
+		messages.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.countdown_seconds"), SweeperConfig.INSTANCE.countdownSeconds)
+				.setDefaultValue(defaults.countdownSeconds).setMin(1).setMax(60).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.countdownSeconds = newValue).build());
+
+		messages.addEntry(entryBuilder.startBooleanToggle(Component.translatable("text.sweeper_maid.option.enable_cleared_broadcast"), SweeperConfig.INSTANCE.enableClearedBroadcast)
+				.setDefaultValue(defaults.enableClearedBroadcast).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.enableClearedBroadcast = newValue).build());
+
+		messages.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.chat_msgcd"), SweeperConfig.INSTANCE.chatMessageCountdown)
+				.setDefaultValue(defaults.chatMessageCountdown).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.chatMessageCountdown = newValue).build());
+
+		messages.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.chat_msgclr"), SweeperConfig.INSTANCE.chatMessageCleared)
+				.setDefaultValue(defaults.chatMessageCleared).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.chatMessageCleared = newValue).build());
 
 		messages.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.msg60"), SweeperConfig.INSTANCE.message60s)
 				.setDefaultValue(defaults.message60s).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.message60s = newValue).build());
@@ -196,6 +228,38 @@ public class SweeperCanClient implements ClientModInitializer {
 		trashCan.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.page_yoffset"), SweeperConfig.INSTANCE.pageControlButtonY)
 				.setDefaultValue(defaults.pageControlButtonY).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.pageControlButtonY = newValue).build());
 
+		trashCan.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.clear_xoffset"), SweeperConfig.INSTANCE.clearButtonX)
+				.setDefaultValue(defaults.clearButtonX).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.clearButtonX = newValue).build());
+
+		trashCan.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.clear_yoffset"), SweeperConfig.INSTANCE.clearButtonY)
+				.setDefaultValue(defaults.clearButtonY).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.clearButtonY = newValue).build());
+
+		ConfigCategory autoEmpty = builder.getOrCreateCategory(Component.translatable("text.sweeper_maid.category.autoempty"));
+
+		autoEmpty.addEntry(entryBuilder.startBooleanToggle(Component.translatable("text.sweeper_maid.option.enable_autoempty"), SweeperConfig.INSTANCE.enableAutoEmpty)
+				.setDefaultValue(defaults.enableAutoEmpty).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.enableAutoEmpty = newValue).build());
+
+		autoEmpty.addEntry(entryBuilder.startIntField(Component.translatable("text.sweeper_maid.option.autoempty_int"), SweeperConfig.INSTANCE.autoEmptyInterval)
+				.setDefaultValue(defaults.autoEmptyInterval).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.autoEmptyInterval = newValue).build());
+
+		autoEmpty.addEntry(entryBuilder.startBooleanToggle(Component.translatable("text.sweeper_maid.option.enable_autoempty_countdown"), SweeperConfig.INSTANCE.enableAutoEmptyCountdown)
+				.setDefaultValue(defaults.enableAutoEmptyCountdown).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.enableAutoEmptyCountdown = newValue).build());
+
+		autoEmpty.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.autoempty_180s"), SweeperConfig.INSTANCE.autoEmptyMsg180s)
+				.setDefaultValue(defaults.autoEmptyMsg180s).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.autoEmptyMsg180s = newValue).build());
+
+		autoEmpty.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.autoempty_60s"), SweeperConfig.INSTANCE.autoEmptyMsg60s)
+				.setDefaultValue(defaults.autoEmptyMsg60s).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.autoEmptyMsg60s = newValue).build());
+
+		autoEmpty.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.autoempty_10s"), SweeperConfig.INSTANCE.autoEmptyMsg10s)
+				.setDefaultValue(defaults.autoEmptyMsg10s).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.autoEmptyMsg10s = newValue).build());
+
+		autoEmpty.addEntry(entryBuilder.startBooleanToggle(Component.translatable("text.sweeper_maid.option.enable_autoempty_cleared"), SweeperConfig.INSTANCE.enableAutoEmptyClearedMsg)
+				.setDefaultValue(defaults.enableAutoEmptyClearedMsg).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.enableAutoEmptyClearedMsg = newValue).build());
+
+		autoEmpty.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.autoempty_cleared"), SweeperConfig.INSTANCE.autoEmptyMsgCleared)
+				.setDefaultValue(defaults.autoEmptyMsgCleared).setSaveConsumer(newValue -> SweeperConfig.INSTANCE.autoEmptyMsgCleared = newValue).build());
+
 		ConfigCategory ui = builder.getOrCreateCategory(Component.translatable("text.sweeper_maid.category.uibutton"));
 
 		ui.addEntry(entryBuilder.startStrField(Component.translatable("text.sweeper_maid.option.showmode"), SweeperConfig.INSTANCE.showInventoryButton)
@@ -211,6 +275,18 @@ public class SweeperCanClient implements ClientModInitializer {
 		return builder.build();
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
