@@ -96,7 +96,6 @@ public class SweeperCanClient implements ClientModInitializer {
 					}
 
 					int maxPages = Math.min(10, Math.max(1, SweeperConfig.INSTANCE.trashCanCount));
-					if (maxPages <= 1) return;
 
 					// Extract the current page by finding the first sequence of digits right after the base title
 					int currentPage = 1;
@@ -132,23 +131,25 @@ public class SweeperCanClient implements ClientModInitializer {
 					}).bounds(guiLeft + 176 - 60 + SweeperConfig.INSTANCE.clearButtonX, baseY + SweeperConfig.INSTANCE.clearButtonY, 60, 15).build();
 					Screens.getButtons(screen).add(clearButton);
 
-					Button prevButton = Button.builder(Component.literal("<"), btn -> {
-						savedMouseX = client.mouseHandler.xpos();
-						savedMouseY = client.mouseHandler.ypos();
-						expectsPageSwitch = true;
-						Minecraft.getInstance().player.connection.sendUnsignedCommand("sweeper open " + targetPrev);
-					}).bounds(centerX - 15 - 3 + SweeperConfig.INSTANCE.pageControlButtonX, baseY + SweeperConfig.INSTANCE.pageControlButtonY, 15, 15).build();
-					prevButton.active = currentPage > 1;
-					Screens.getButtons(screen).add(prevButton);
+					if (maxPages > 1) {
+						Button prevButton = Button.builder(Component.literal("<"), btn -> {
+							savedMouseX = client.mouseHandler.xpos();
+							savedMouseY = client.mouseHandler.ypos();
+							expectsPageSwitch = true;
+							Minecraft.getInstance().player.connection.sendUnsignedCommand("sweeper open " + targetPrev);
+						}).bounds(centerX - 15 - 3 + SweeperConfig.INSTANCE.pageControlButtonX, baseY + SweeperConfig.INSTANCE.pageControlButtonY, 15, 15).build();
+						prevButton.active = currentPage > 1;
+						Screens.getButtons(screen).add(prevButton);
 
-					Button nextButton = Button.builder(Component.literal(">"), btn -> {
-						savedMouseX = client.mouseHandler.xpos();
-						savedMouseY = client.mouseHandler.ypos();
-						expectsPageSwitch = true;
-						Minecraft.getInstance().player.connection.sendUnsignedCommand("sweeper open " + targetNext);
-					}).bounds(centerX + 3 + SweeperConfig.INSTANCE.pageControlButtonX, baseY + SweeperConfig.INSTANCE.pageControlButtonY, 15, 15).build();
-					nextButton.active = currentPage < maxPages;
-					Screens.getButtons(screen).add(nextButton);
+						Button nextButton = Button.builder(Component.literal(">"), btn -> {
+							savedMouseX = client.mouseHandler.xpos();
+							savedMouseY = client.mouseHandler.ypos();
+							expectsPageSwitch = true;
+							Minecraft.getInstance().player.connection.sendUnsignedCommand("sweeper open " + targetNext);
+						}).bounds(centerX + 3 + SweeperConfig.INSTANCE.pageControlButtonX, baseY + SweeperConfig.INSTANCE.pageControlButtonY, 15, 15).build();
+						nextButton.active = currentPage < maxPages;
+						Screens.getButtons(screen).add(nextButton);
+					}
 				}
 			}
 		});
@@ -275,6 +276,8 @@ public class SweeperCanClient implements ClientModInitializer {
 		return builder.build();
 	}
 }
+
+
 
 
 

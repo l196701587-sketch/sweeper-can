@@ -30,6 +30,8 @@ public class SweeperCan implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static int tickCounter = 0;
 	private static int autoEmptyTickCounter = 0;
+	private static int overwritePageIndex = 0;
+	private static int overwriteSlotIndex = 0;
 
 	@Override
 	public void onInitialize() {
@@ -152,6 +154,8 @@ public class SweeperCan implements ModInitializer {
 					for (int i = 0; i < 10; i++) {
 						state.inventories[i].clearContent();
 					}
+					overwritePageIndex = 0;
+					overwriteSlotIndex = 0;
 				});
 			}
 		});
@@ -185,6 +189,8 @@ public class SweeperCan implements ModInitializer {
 						for (int i = 0; i < 10; i++) {
 							state.inventories[i].clearContent();
 						}
+						overwritePageIndex = 0;
+						overwriteSlotIndex = 0;
 					});
 
 					if (SweeperConfig.INSTANCE.enableAutoEmptyClearedMsg) {
@@ -261,6 +267,35 @@ public class SweeperCan implements ModInitializer {
 											currentSlot.grow(transfer);
 											stack.shrink(transfer);
 										}
+										if (stack.isEmpty()) break outer;
+									}
+								}
+							}
+
+							if (!stack.isEmpty()) {
+								if (overwritePageIndex >= maxPages) {
+									overwritePageIndex = 0;
+									overwriteSlotIndex = 0;
+								}
+								var inv = state.inventories[overwritePageIndex];
+								if (overwriteSlotIndex >= inv.getContainerSize()) {
+									overwriteSlotIndex = 0;
+									overwritePageIndex++;
+									if (overwritePageIndex >= maxPages) {
+										overwritePageIndex = 0;
+									}
+									inv = state.inventories[overwritePageIndex];
+								}
+
+								inv.setItem(overwriteSlotIndex, stack.copy());
+								stack.setCount(0);
+
+								overwriteSlotIndex++;
+								if (overwriteSlotIndex >= inv.getContainerSize()) {
+									overwriteSlotIndex = 0;
+									overwritePageIndex++;
+									if (overwritePageIndex >= maxPages) {
+										overwritePageIndex = 0;
 									}
 								}
 							}
@@ -280,8 +315,6 @@ public class SweeperCan implements ModInitializer {
 				tickCounter = 0;
 			}
 		});
-
-		LOGGER.info("Hello Fabric world!");
 	}
 
         public static void syncConfigToAll(net.minecraft.server.MinecraftServer server) {
